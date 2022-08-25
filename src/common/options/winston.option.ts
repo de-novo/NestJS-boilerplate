@@ -2,17 +2,24 @@ import * as winston from 'winston';
 import { WinstonModuleAsyncOptions } from 'nest-winston';
 import * as winstonDaily from 'winston-daily-rotate-file';
 const logDir = 'logs';
-const { colorize, splat, combine, timestamp, prettyPrint, printf, label, ms } =
+const { colorize, combine, timestamp, prettyPrint, printf, label, ms } =
   winston.format;
 const logFormat = printf((info) => {
-  //   console.log(info);
   return `${'\x1B[32m[' + info.label + ']\x1B[39m'} - ${info.timestamp}    ${
     info.level === 'info'
       ? '\x1B[32m' + info.level.toUpperCase() + '\x1B[39m'
       : '\x1B[31m' + info.level.toUpperCase() + '\x1B[39m'
   } \x1B[33m ${info.context ? '[' + info.context + ']' : ''}\x1B[39m \x1B[33m ${
     info.stack ? '[' + info.stack + ']' : ''
-  }\x1B[39m ${info.message} \x1B[33m${info.ms}\x1B[39m`;
+  }\x1B[39m ${info.message} \x1B[33m${info.ms}\x1B[39m ${
+    info.level === 'error'
+      ? '\x1B[31m' +
+        typeof info +
+        '\x1B[39m' +
+        '\n' +
+        JSON.stringify(info, null, 2)
+      : ''
+  }`;
 });
 
 const fileFormat = printf((info) => {
@@ -37,7 +44,6 @@ export const options = {
     colorize: false,
     zippedArchive: true,
     format: combine(
-      splat(),
       ms(),
       label({ label: 'Nest' }),
       timestamp({
@@ -57,7 +63,6 @@ export const options = {
     colorize: false,
     handleExceptions: true,
     format: combine(
-      splat(),
       ms(),
       label({ label: 'Nest' }),
       timestamp({
@@ -79,7 +84,6 @@ export const options = {
         format: 'YYYY. MM. DD   HH:mm:ss',
       }),
       colorize({ message: true }),
-      splat(),
       prettyPrint(),
       ms(),
       logFormat,
@@ -95,8 +99,8 @@ export const winstonModuleAsyncOptions: WinstonModuleAsyncOptions = {
       process.env.NODE_ENV === 'production'
         ? [new winstonDaily(options.file), new winstonDaily(options.error)]
         : [
-            new winstonDaily(options.file),
-            new winstonDaily(options.error),
+            // new winstonDaily(options.file),
+            // new winstonDaily(options.error),
             new winston.transports.Console(options.console),
             // new winston.transports.Console(options.consoleError),
           ],
